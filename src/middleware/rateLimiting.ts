@@ -169,12 +169,29 @@ export const generalRateLimit = createRateLimiter({
     message: "Too many requests from this IP, please try again later"
 });
 
-// Authentication rate limiter (stricter)
+// Authentication rate limiter (stricter with progressive delays)
 export const authRateLimit = createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // 10 login attempts per 15 minutes
+    max: 5, // Reduced to 5 failed attempts per 15 minutes
     message: "Too many authentication attempts, please try again later",
-    skipSuccessfulRequests: true // Don't count successful logins
+    skipSuccessfulRequests: true, // Don't count successful logins
+    keyGenerator: (req: Request) => {
+        // Rate limit by IP + email combination for more precise limiting
+        const email = req.body?.email || "unknown";
+        return `${req.ip}:${email}`;
+    }
+});
+
+// Stricter rate limiter for failed login attempts
+export const failedLoginRateLimit = createRateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3, // Only 3 failed attempts per hour per IP+email
+    message: "Account temporarily locked due to multiple failed login attempts",
+    skipSuccessfulRequests: true,
+    keyGenerator: (req: Request) => {
+        const email = req.body?.email || "unknown";
+        return `failed:${req.ip}:${email}`;
+    }
 });
 
 // Search rate limiter

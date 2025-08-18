@@ -1,5 +1,5 @@
-import fastJson from 'fast-json-stringify';
-import { logger } from '../utils/logger';
+import fastJson from "fast-json-stringify";
+import { logger } from "../utils/logger";
 
 /**
  * Fast JSON Stringify Service
@@ -14,217 +14,301 @@ class FastJsonService {
 
     private initializeSchemas(): void {
         // Product schema
-        this.schemas.set('product', fastJson({
-            type: 'object',
-            properties: {
-                _id: { type: 'string' },
-                name: { type: 'string' },
-                description: { type: 'string' },
-                price: { type: 'number' },
-                originalPrice: { type: 'number' },
-                discount: { type: 'number' },
-                category: { type: 'string' },
-                brand: { type: 'string' },
-                images: {
-                    type: 'array',
-                    items: { type: 'string' }
-                },
-                rating: { type: 'number' },
-                reviewCount: { type: 'number' },
-                stock: { type: 'number' },
-                isVisible: { type: 'boolean' },
-                isFeatured: { type: 'boolean' },
-                tags: {
-                    type: 'array',
-                    items: { type: 'string' }
-                },
-                specifications: { type: 'object' },
-                createdAt: { type: 'string' },
-                updatedAt: { type: 'string' }
-            }
-        }));
+        this.schemas.set(
+            "product",
+            fastJson({
+                type: "object",
+                properties: {
+                    _id: { type: "string" },
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    price: { type: "number" },
+                    originalPrice: { type: "number" },
+                    discount: { type: "number" },
+                    category: { type: "string" },
+                    brand: { type: "string" },
+                    images: {
+                        type: "array",
+                        items: { type: "string" }
+                    },
+                    rating: { type: "number" },
+                    reviewCount: { type: "number" },
+                    stock: { type: "number" },
+                    isVisible: { type: "boolean" },
+                    isFeatured: { type: "boolean" },
+                    tags: {
+                        type: "array",
+                        items: { type: "string" }
+                    },
+                    specifications: { type: "object" },
+                    createdAt: { type: "string" },
+                    updatedAt: { type: "string" }
+                }
+            })
+        );
 
         // Product list schema
-        this.schemas.set('productList', fastJson({
-            type: 'object',
-            properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                data: {
-                    type: 'array',
-                    items: {
-                        type: 'object',
-                        properties: {
-                            _id: { type: 'string' },
-                            name: { type: 'string' },
-                            price: { type: 'number' },
-                            images: {
-                                type: 'array',
-                                items: { type: 'string' }
-                            },
-                            rating: { type: 'number' },
-                            reviewCount: { type: 'number' },
-                            stock: { type: 'number' }
+        this.schemas.set(
+            "productList",
+            fastJson({
+                type: "object",
+                properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" },
+                    data: {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                _id: { type: "string" },
+                                name: { type: "string" },
+                                price: { type: "number" },
+                                images: {
+                                    type: "array",
+                                    items: { type: "string" }
+                                },
+                                rating: { type: "number" },
+                                reviewCount: { type: "number" },
+                                stock: { type: "number" }
+                            }
                         }
-                    }
-                },
-                pagination: {
-                    type: 'object',
-                    properties: {
-                        page: { type: 'number' },
-                        limit: { type: 'number' },
-                        total: { type: 'number' },
-                        pages: { type: 'number' },
-                        hasNext: { type: 'boolean' },
-                        hasPrev: { type: 'boolean' }
-                    }
-                },
-                timestamp: { type: 'string' }
-            }
-        }));
+                    },
+                    pagination: {
+                        type: "object",
+                        properties: {
+                            page: { type: "number" },
+                            limit: { type: "number" },
+                            total: { type: "number" },
+                            pages: { type: "number" },
+                            hasNext: { type: "boolean" },
+                            hasPrev: { type: "boolean" }
+                        }
+                    },
+                    timestamp: { type: "string" }
+                }
+            })
+        );
 
         // User schema
-        this.schemas.set('user', fastJson({
-            type: 'object',
-            properties: {
-                _id: { type: 'string' },
-                firstName: { type: 'string' },
-                lastName: { type: 'string' },
-                email: { type: 'string' },
-                role: { type: 'string' },
-                avatar: { type: 'string' },
-                isActive: { type: 'boolean' },
-                preferences: { type: 'object' },
-                createdAt: { type: 'string' },
-                lastLogin: { type: 'string' }
-            }
-        }));
+        this.schemas.set(
+            "user",
+            fastJson({
+                type: "object",
+                properties: {
+                    _id: { type: "string" },
+                    firstName: { type: "string" },
+                    lastName: { type: "string" },
+                    email: { type: "string" },
+                    role: { type: "string" },
+                    avatar: { type: "string" },
+                    isActive: { type: "boolean" },
+                    preferences: { type: "object" },
+                    createdAt: { type: "string" },
+                    lastLogin: { type: "string" }
+                }
+            })
+        );
 
         // Order schema
-        this.schemas.set('order', fastJson({
-            type: 'object',
-            properties: {
-                _id: { type: 'string' },
-                orderNumber: { type: 'string' },
-                user: { type: 'string' },
-                items: {
-                    type: 'array',
+        this.schemas.set(
+            "order",
+            fastJson({
+                type: "object",
+                properties: {
+                    _id: { type: "string" },
+                    orderNumber: { type: "string" },
+                    user: { type: "string" },
                     items: {
-                        type: 'object',
-                        properties: {
-                            product: { type: 'string' },
-                            quantity: { type: 'number' },
-                            price: { type: 'number' },
-                            total: { type: 'number' }
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                product: { type: "string" },
+                                quantity: { type: "number" },
+                                price: { type: "number" },
+                                total: { type: "number" }
+                            }
                         }
-                    }
-                },
-                totalAmount: { type: 'number' },
-                status: { type: 'string' },
-                paymentStatus: { type: 'string' },
-                shippingAddress: { type: 'object' },
-                createdAt: { type: 'string' },
-                updatedAt: { type: 'string' }
-            }
-        }));
+                    },
+                    totalAmount: { type: "number" },
+                    status: { type: "string" },
+                    paymentStatus: { type: "string" },
+                    shippingAddress: { type: "object" },
+                    createdAt: { type: "string" },
+                    updatedAt: { type: "string" }
+                }
+            })
+        );
 
-        // API Response schema
-        this.schemas.set('apiResponse', fastJson({
-            type: 'object',
-            properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                data: { type: 'object' },
-                language: { type: 'string' },
-                pagination: {
-                    type: 'object',
-                    properties: {
-                        page: { type: 'number' },
-                        limit: { type: 'number' },
-                        total: { type: 'number' },
-                        pages: { type: 'number' },
-                        hasNext: { type: 'boolean' },
-                        hasPrev: { type: 'boolean' }
-                    }
+        // API Response schema - more flexible to handle various response types
+        this.schemas.set(
+            "apiResponse",
+            fastJson({
+                type: "object",
+                properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" },
+                    data: {
+                        type: "object",
+                        additionalProperties: true // Allow any additional properties
+                    },
+                    language: { type: "string" },
+                    pagination: {
+                        type: "object",
+                        properties: {
+                            page: { type: "number" },
+                            limit: { type: "number" },
+                            total: { type: "number" },
+                            pages: { type: "number" },
+                            hasNext: { type: "boolean" },
+                            hasPrev: { type: "boolean" }
+                        }
+                    },
+                    meta: {
+                        type: "object",
+                        properties: {
+                            requestId: { type: "string" },
+                            processingTime: { type: "number" },
+                            cached: { type: "boolean" },
+                            version: { type: "string" }
+                        }
+                    },
+                    timestamp: { type: "string" }
                 },
-                meta: {
-                    type: 'object',
-                    properties: {
-                        requestId: { type: 'string' },
-                        processingTime: { type: 'number' },
-                        cached: { type: 'boolean' },
-                        version: { type: 'string' }
-                    }
+                additionalProperties: true // Allow any additional properties at root level
+            })
+        );
+
+        // Auth Response schema - specific for authentication endpoints
+        this.schemas.set(
+            "authResponse",
+            fastJson({
+                type: "object",
+                properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" },
+                    data: {
+                        type: "object",
+                        properties: {
+                            user: {
+                                type: "object",
+                                properties: {
+                                    _id: { type: "string" },
+                                    firstName: { type: "string" },
+                                    lastName: { type: "string" },
+                                    email: { type: "string" },
+                                    role: { type: "string" },
+                                    avatar: { type: "string" },
+                                    isActive: { type: "boolean" },
+                                    isEmailVerified: { type: "boolean" },
+                                    phone: { type: "string" },
+                                    preferences: {
+                                        type: "object",
+                                        properties: {
+                                            language: { type: "string" },
+                                            currency: { type: "string" },
+                                            notifications: {
+                                                type: "object",
+                                                properties: {
+                                                    email: { type: "boolean" },
+                                                    sms: { type: "boolean" },
+                                                    push: { type: "boolean" }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    addresses: { type: "array" },
+                                    createdAt: { type: "string" },
+                                    updatedAt: { type: "string" },
+                                    lastLogin: { type: "string" }
+                                },
+                                additionalProperties: true
+                            },
+                            token: { type: "string" },
+                            refreshToken: { type: "string" }
+                        },
+                        additionalProperties: true
+                    },
+                    timestamp: { type: "string" }
                 },
-                timestamp: { type: 'string' }
-            }
-        }));
+                additionalProperties: true
+            })
+        );
 
         // Translation schema
-        this.schemas.set('translation', fastJson({
-            type: 'object',
-            properties: {
-                _id: { type: 'string' },
-                key: { type: 'string' },
-                category: { type: 'string' },
-                translations: {
-                    type: 'object',
-                    properties: {
-                        vi: { type: 'string' },
-                        en: { type: 'string' },
-                        ja: { type: 'string' }
-                    }
-                },
-                description: { type: 'string' },
-                isActive: { type: 'boolean' },
-                createdAt: { type: 'string' },
-                updatedAt: { type: 'string' }
-            }
-        }));
+        this.schemas.set(
+            "translation",
+            fastJson({
+                type: "object",
+                properties: {
+                    _id: { type: "string" },
+                    key: { type: "string" },
+                    category: { type: "string" },
+                    translations: {
+                        type: "object",
+                        properties: {
+                            vi: { type: "string" },
+                            en: { type: "string" },
+                            ja: { type: "string" }
+                        }
+                    },
+                    description: { type: "string" },
+                    isActive: { type: "boolean" },
+                    createdAt: { type: "string" },
+                    updatedAt: { type: "string" }
+                }
+            })
+        );
 
         // Analytics schema
-        this.schemas.set('analytics', fastJson({
-            type: 'object',
-            properties: {
-                overview: {
-                    type: 'object',
-                    properties: {
-                        totalProducts: { type: 'number' },
-                        totalUsers: { type: 'number' },
-                        totalOrders: { type: 'number' },
-                        timestamp: { type: 'string' }
-                    }
-                },
-                events: { type: 'object' },
-                performance: {
-                    type: 'object',
-                    properties: {
-                        requestCount: { type: 'number' },
-                        averageResponseTime: { type: 'number' },
-                        errorRate: { type: 'number' },
-                        cacheHitRate: { type: 'number' }
+        this.schemas.set(
+            "analytics",
+            fastJson({
+                type: "object",
+                properties: {
+                    overview: {
+                        type: "object",
+                        properties: {
+                            totalProducts: { type: "number" },
+                            totalUsers: { type: "number" },
+                            totalOrders: { type: "number" },
+                            timestamp: { type: "string" }
+                        }
+                    },
+                    events: { type: "object" },
+                    performance: {
+                        type: "object",
+                        properties: {
+                            requestCount: { type: "number" },
+                            averageResponseTime: { type: "number" },
+                            errorRate: { type: "number" },
+                            cacheHitRate: { type: "number" }
+                        }
                     }
                 }
-            }
-        }));
+            })
+        );
 
         // Error schema
-        this.schemas.set('error', fastJson({
-            type: 'object',
-            properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                error: {
-                    type: 'object',
-                    properties: {
-                        code: { type: 'string' },
-                        details: { type: 'string' },
-                        stack: { type: 'string' }
-                    }
-                },
-                timestamp: { type: 'string' }
-            }
-        }));
+        this.schemas.set(
+            "error",
+            fastJson({
+                type: "object",
+                properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" },
+                    error: {
+                        type: "object",
+                        properties: {
+                            code: { type: "string" },
+                            details: { type: "string" },
+                            stack: { type: "string" }
+                        }
+                    },
+                    timestamp: { type: "string" }
+                }
+            })
+        );
 
         logger.info(`FastJSON schemas initialized: ${this.schemas.size} schemas`);
     }
@@ -307,9 +391,9 @@ class FastJsonService {
 
         return {
             iterations,
-            fastJsonTime: fastTime.toFixed(2) + 'ms',
-            regularJsonTime: regularTime.toFixed(2) + 'ms',
-            speedup: speedup.toFixed(2) + 'x faster',
+            fastJsonTime: fastTime.toFixed(2) + "ms",
+            regularJsonTime: regularTime.toFixed(2) + "ms",
+            speedup: speedup.toFixed(2) + "x faster",
             schema: schemaName
         };
     }

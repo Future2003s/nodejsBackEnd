@@ -21,8 +21,22 @@ declare global {
 const jwtCache = new CacheWrapper(CACHE_PREFIXES.USERS, CACHE_TTL.SHORT);
 const tokenBlacklist = new CacheWrapper("blacklist", CACHE_TTL.VERY_LONG);
 
-// Token validation cache to avoid repeated JWT verification
-const tokenValidationCache = new Map<string, { decoded: any; expires: number }>();
+// Token validation cache to avoid repeated JWT verification with LRU eviction
+const tokenValidationCache = new Map<string, { decoded: any; expires: number; lastAccessed: number }>();
+
+// Cleanup expired cache entries periodically
+setInterval(
+    () => {
+        const now = Date.now();
+        for (const [token, data] of tokenValidationCache.entries()) {
+            if (now > data.expires || now - data.lastAccessed > 30 * 60 * 1000) {
+                // 30 min idle timeout
+                tokenValidationCache.delete(token);
+            }
+        }
+    },
+    5 * 60 * 1000
+); // Cleanup every 5 minutes
 
 // Protect routes - require authentication (Optimized)
 export const protect = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -51,6 +65,7 @@ export const protect = asyncHandler(async (req: Request, res: Response, next: Ne
         const cachedValidation = tokenValidationCache.get(token);
         if (cachedValidation && Date.now() < cachedValidation.expires) {
             decoded = cachedValidation.decoded;
+            cachedValidation.lastAccessed = Date.now(); // Update access time
             logger.debug("JWT validation cache hit");
         } else {
             // Verify token
@@ -59,15 +74,17 @@ export const protect = asyncHandler(async (req: Request, res: Response, next: Ne
             // Cache the validation result for 5 minutes
             tokenValidationCache.set(token, {
                 decoded,
-                expires: Date.now() + 5 * 60 * 1000
+                expires: Date.now() + 5 * 60 * 1000,
+                lastAccessed: Date.now()
             });
 
-            // Limit cache size to prevent memory leaks
+            // Limit cache size to prevent memory leaks (LRU eviction)
             if (tokenValidationCache.size > 1000) {
-                const oldestKey = tokenValidationCache.keys().next().value;
-                if (oldestKey) {
-                    tokenValidationCache.delete(oldestKey);
-                }
+                // Remove least recently accessed entries
+                const entries = Array.from(tokenValidationCache.entries());
+                entries.sort((a, b) => a[1].lastAccessed - b[1].lastAccessed);
+                const toRemove = entries.slice(0, 100); // Remove oldest 100 entries
+                toRemove.forEach(([key]) => tokenValidationCache.delete(key));
             }
         }
 

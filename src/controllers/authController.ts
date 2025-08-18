@@ -17,7 +17,7 @@ export const register = asyncHandler(async (req: Request, res: Response, next: N
         phone
     });
 
-    ResponseHandler.created(res, result, "User registered successfully. Please check your email for verification.");
+    ResponseHandler.authCreated(res, result, "User registered successfully.");
 });
 
 // @desc    Login user
@@ -28,14 +28,30 @@ export const login = asyncHandler(async (req: Request, res: Response, next: Next
 
     const result = await AuthService.login({ email, password });
 
-    ResponseHandler.success(res, result, "Login successful");
+    ResponseHandler.authSuccess(res, result, "Login successful");
 });
 
 // @desc    Logout user
 // @route   POST /api/v1/auth/logout
-// @access  Public
+// @access  Private
 export const logout = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement token blacklisting with Redis
+    const token = req.headers.authorization?.split(" ")[1];
+    const { refreshToken } = req.body;
+
+    if (token) {
+        // Blacklist the access token
+        const { CacheWrapper } = await import("../utils/performance");
+        const tokenBlacklist = new CacheWrapper("blacklist", 24 * 60 * 60); // 24 hours
+        await tokenBlacklist.set(token, true);
+    }
+
+    if (refreshToken) {
+        // Blacklist the refresh token
+        const { CacheWrapper } = await import("../utils/performance");
+        const refreshBlacklist = new CacheWrapper("blacklist", 7 * 24 * 60 * 60); // 7 days
+        await refreshBlacklist.set(refreshToken, true);
+    }
+
     ResponseHandler.success(res, null, "Logout successful");
 });
 

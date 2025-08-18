@@ -12,10 +12,17 @@ interface ApiResponse {
         total: number;
         pages: number;
     };
+    timestamp?: string;
 }
 
 export class ResponseHandler {
-    static success(res: Response, data: any = null, message: string = "Success", statusCode: number = 200): Response {
+    static success(
+        res: Response,
+        data: any = null,
+        message: string = "Success",
+        statusCode: number = 200,
+        schemaName: string = "apiResponse"
+    ): Response {
         const response: ApiResponse = {
             success: true,
             message,
@@ -25,10 +32,10 @@ export class ResponseHandler {
 
         // Use fast JSON stringify for better performance
         try {
-            const jsonString = fastJsonService.stringify("apiResponse", response);
+            const jsonString = fastJsonService.stringify(schemaName, response);
             return res.status(statusCode).type("application/json").send(jsonString);
         } catch (error) {
-            logger.warn("FastJSON failed, falling back to regular JSON:", error);
+            logger.warn(`FastJSON failed for schema ${schemaName}, falling back to regular JSON:`, error);
             return res.status(statusCode).json(response);
         }
     }
@@ -66,8 +73,26 @@ export class ResponseHandler {
         return res.status(200).json(response);
     }
 
-    static created(res: Response, data: any = null, message: string = "Created successfully"): Response {
-        return this.success(res, data, message, 201);
+    static created(
+        res: Response,
+        data: any = null,
+        message: string = "Created successfully",
+        schemaName: string = "apiResponse"
+    ): Response {
+        return this.success(res, data, message, 201, schemaName);
+    }
+
+    static authSuccess(
+        res: Response,
+        data: any = null,
+        message: string = "Success",
+        statusCode: number = 200
+    ): Response {
+        return this.success(res, data, message, statusCode, "authResponse");
+    }
+
+    static authCreated(res: Response, data: any = null, message: string = "Created successfully"): Response {
+        return this.success(res, data, message, 201, "authResponse");
     }
 
     static updated(res: Response, data: any = null, message: string = "Updated successfully"): Response {

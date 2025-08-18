@@ -30,10 +30,20 @@ export const validateRegister = [
     body("email").isEmail().normalizeEmail().withMessage("Please provide a valid email"),
 
     body("password")
-        .isLength({ min: 6 })
-        .withMessage("Password must be at least 6 characters long")
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-        .withMessage("Password must contain at least one uppercase letter, one lowercase letter, and one number"),
+        .isLength({ min: 8, max: 128 })
+        .withMessage("Password must be between 8 and 128 characters long")
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+        .withMessage(
+            "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
+        )
+        .custom((value) => {
+            // Check for common weak passwords
+            const commonPasswords = ["password", "123456", "qwerty", "admin", "letmein"];
+            if (commonPasswords.some((weak) => value.toLowerCase().includes(weak))) {
+                throw new Error("Password contains common weak patterns");
+            }
+            return true;
+        }),
 
     body("phone").optional().isMobilePhone("any").withMessage("Please provide a valid phone number"),
 

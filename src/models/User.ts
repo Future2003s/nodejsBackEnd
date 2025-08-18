@@ -107,7 +107,7 @@ const UserSchema = new Schema<IUser>(
         },
         isEmailVerified: {
             type: Boolean,
-            default: false
+            default: true
         },
         emailVerificationToken: String,
         passwordResetToken: String,
@@ -146,7 +146,7 @@ UserSchema.pre("save", async function (next) {
         next();
     }
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12); // Increased from 10 to 12 for better security
     this.password = await bcrypt.hash(this.password, salt);
 });
 
@@ -171,7 +171,8 @@ UserSchema.methods.matchPassword = async function (enteredPassword: string) {
 
 // Generate email verification token
 UserSchema.methods.generateEmailVerificationToken = function () {
-    const verificationToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const crypto = require("crypto");
+    const verificationToken = crypto.randomBytes(32).toString("hex");
 
     this.emailVerificationToken = verificationToken;
     return verificationToken;
@@ -179,7 +180,8 @@ UserSchema.methods.generateEmailVerificationToken = function () {
 
 // Generate password reset token
 UserSchema.methods.generatePasswordResetToken = function () {
-    const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const crypto = require("crypto");
+    const resetToken = crypto.randomBytes(32).toString("hex");
 
     this.passwordResetToken = resetToken;
     this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes

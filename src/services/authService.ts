@@ -38,12 +38,8 @@ export class AuthService {
             // Create new user
             const user = await User.create(userData);
 
-            // Generate email verification token
-            const verificationToken = user.generateEmailVerificationToken();
-            await user.save({ validateBeforeSave: false });
-
-            // TODO: Send verification email
-            logger.info(`User registered: ${userData.email}, verification token: ${verificationToken}`);
+            // Log successful registration
+            logger.info(`User registered: ${userData.email}`);
 
             // Generate tokens
             const token = user.getSignedJwtToken();
@@ -269,7 +265,7 @@ export class AuthService {
     }
 
     /**
-     * Refresh JWT token
+     * Refresh JWT token with rotation
      */
     static async refreshToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
         try {
@@ -282,9 +278,18 @@ export class AuthService {
                 throw new AppError("Invalid refresh token", 401);
             }
 
-            // Generate new tokens
+            // Blacklist the old refresh token to prevent reuse
+            const tokenBlacklist = new (await import("../utils/performance")).CacheWrapper(
+                "blacklist",
+                7 * 24 * 60 * 60
+            ); // 7 days
+            await tokenBlacklist.set(refreshToken, true);
+
+            // Generate new tokens (both access and refresh)
             const newToken = user.getSignedJwtToken();
             const newRefreshToken = user.getRefreshToken();
+
+            logger.info(`Token refreshed for user: ${user.email}`);
 
             return {
                 token: newToken,
