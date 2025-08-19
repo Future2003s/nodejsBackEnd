@@ -126,7 +126,9 @@ export const changePassword = asyncHandler(async (req: Request, res: Response, n
 // @route   GET /api/v1/auth/me
 // @access  Private
 export const getMe = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const user = await AuthService.getUserById(req.user.id);
+    // Use _id or id depending on what's available in req.user
+    const userId = req.user._id || req.user.id;
+    const user = await AuthService.getUserById(userId);
 
     ResponseHandler.success(res, user, "User profile retrieved successfully");
 });

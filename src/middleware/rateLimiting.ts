@@ -104,7 +104,7 @@ function createRateLimiter(config: RateLimitConfig) {
         skipFailedRequests: config.skipFailedRequests || false,
 
         // Use default key generator to avoid IPv6 issues
-        keyGenerator: config.keyGenerator,
+        keyGenerator: config.keyGenerator || ((req) => req.ip),
 
         // Custom store implementation
         store: {

@@ -37,15 +37,50 @@ export const validateRegister = [
             "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
         )
         .custom((value) => {
-            // Check for common weak passwords
-            const commonPasswords = ["password", "123456", "qwerty", "admin", "letmein"];
-            if (commonPasswords.some((weak) => value.toLowerCase().includes(weak))) {
-                throw new Error("Password contains common weak patterns");
+            // Check for common weak passwords (exact matches or very obvious patterns)
+            const commonPasswords = ["password", "123456", "qwerty", "admin", "letmein", "welcome", "login"];
+            const lowerValue = value.toLowerCase();
+
+            // Check for exact matches or passwords that are just the common word + numbers
+            const isWeak = commonPasswords.some((weak) => {
+                return (
+                    lowerValue === weak ||
+                    lowerValue === weak + "123" ||
+                    lowerValue === weak + "1" ||
+                    (lowerValue.startsWith(weak) && lowerValue.length <= weak.length + 3)
+                );
+            });
+
+            if (isWeak) {
+                throw new Error("Password is too common or predictable");
             }
             return true;
         }),
 
-    body("phone").optional().isMobilePhone("any").withMessage("Please provide a valid phone number"),
+    body("phone")
+        .optional()
+        .custom((value) => {
+            if (!value) return true; // Optional field
+
+            // Remove all non-digit characters for validation
+            const digitsOnly = value.replace(/\D/g, "");
+
+            // Must have 10-15 digits total
+            if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+                throw new Error("Phone number must contain 10-15 digits");
+            }
+
+            // Simple but comprehensive phone validation
+            // Allows: digits, spaces, dashes, dots, parentheses, plus sign
+            const phoneRegex = /^[\+]?[\d\s\-\(\)\.]+$/;
+
+            if (!phoneRegex.test(value)) {
+                throw new Error("Phone number contains invalid characters");
+            }
+
+            return true;
+        })
+        .withMessage("Please provide a valid phone number"),
 
     handleValidationErrors
 ];

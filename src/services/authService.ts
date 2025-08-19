@@ -3,6 +3,12 @@ import { AppError } from "../utils/AppError";
 import { logger } from "../utils/logger";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config";
+import { CacheWrapper, QueryAnalyzer, performanceMonitor } from "../utils/performance";
+
+// Create optimized cache instances for auth operations
+const authCache = new CacheWrapper("auth", 300); // 5 minutes
+const tokenBlacklistCache = new CacheWrapper("token_blacklist", 86400); // 24 hours
+const rateLimitCache = new CacheWrapper("rate_limit", 900); // 15 minutes
 
 interface RegisterData {
     firstName: string;
@@ -25,81 +31,132 @@ interface AuthResponse {
 
 export class AuthService {
     /**
-     * Register a new user
+     * Register a new user with optimized performance
      */
     static async register(userData: RegisterData): Promise<AuthResponse> {
-        try {
-            // Check if user already exists
-            const existingUser = await User.findOne({ email: userData.email });
-            if (existingUser) {
-                throw new AppError("User already exists with this email", 400);
+        return QueryAnalyzer.analyzeQuery("AuthService.register", async () => {
+            try {
+                // Check if user already exists using cached method (no password needed)
+                const existingUser = await (User as any).findByEmailCached(userData.email);
+                if (existingUser) {
+                    throw new AppError("User already exists with this email", 400);
+                }
+
+                // Create new user
+                const user = await User.create(userData);
+
+                // Log successful registration
+                logger.info(`User registered: ${userData.email}`);
+
+                // Generate tokens
+                const token = user.getSignedJwtToken();
+                const refreshToken = user.getRefreshToken();
+
+                // Cache user session info for faster subsequent requests
+                await authCache.set(`session:${user._id}`, {
+                    userId: user._id,
+                    email: user.email,
+                    role: user.role,
+                    lastActivity: new Date()
+                });
+
+                // Remove password from response
+                const userResponse = user.toObject();
+                const { password: _, ...userWithoutPassword } = userResponse;
+
+                // Record performance metrics
+                performanceMonitor.recordCacheHit();
+
+                return {
+                    user: userWithoutPassword,
+                    token,
+                    refreshToken
+                };
+            } catch (error) {
+                logger.error("Registration error:", error);
+                performanceMonitor.recordCacheMiss();
+                throw error;
             }
-
-            // Create new user
-            const user = await User.create(userData);
-
-            // Log successful registration
-            logger.info(`User registered: ${userData.email}`);
-
-            // Generate tokens
-            const token = user.getSignedJwtToken();
-            const refreshToken = user.getRefreshToken();
-
-            // Remove password from response
-            const userResponse = user.toObject();
-            const { password: _, ...userWithoutPassword } = userResponse;
-
-            return {
-                user: userWithoutPassword,
-                token,
-                refreshToken
-            };
-        } catch (error) {
-            logger.error("Registration error:", error);
-            throw error;
-        }
+        });
     }
 
     /**
-     * Login user
+     * Login user with optimized performance and rate limiting
      */
     static async login(loginData: LoginData): Promise<AuthResponse> {
-        try {
-            const { email, password } = loginData;
+        return QueryAnalyzer.analyzeQuery("AuthService.login", async () => {
+            try {
+                const { email, password } = loginData;
 
-            // Find user with password field
-            const user = await User.findOne({ email }).select("+password");
+                // Check rate limiting for failed login attempts
+                const rateLimitKey = `login_attempts:${email}`;
+                const attempts = Number((await rateLimitCache.get(rateLimitKey)) || 0);
 
-            if (!user || !(await user.matchPassword(password))) {
-                throw new AppError("Invalid credentials", 401);
+                if (attempts >= 5) {
+                    throw new AppError("Too many login attempts. Please try again later.", 429);
+                }
+
+                // Find user with password field for authentication
+                const user = await (User as any).findByEmailForAuth(email);
+
+                if (!user || !(await user.matchPassword(password))) {
+                    // Increment failed login attempts
+                    await rateLimitCache.set(rateLimitKey, attempts + 1, 900); // 15 minutes
+                    throw new AppError("Invalid credentials", 401);
+                }
+
+                // Clear failed login attempts on successful login
+                await rateLimitCache.del(rateLimitKey);
+
+                // Check if user is active
+                if (!user.isActive) {
+                    throw new AppError("Account is deactivated", 401);
+                }
+
+                // Update last login asynchronously for better performance
+                setImmediate(async () => {
+                    try {
+                        await User.findByIdAndUpdate(
+                            user._id,
+                            { lastLogin: new Date() },
+                            { validateBeforeSave: false }
+                        );
+                    } catch (error) {
+                        logger.error("Error updating last login:", error);
+                    }
+                });
+
+                // Generate tokens
+                const token = user.getSignedJwtToken();
+                const refreshToken = user.getRefreshToken();
+
+                // Cache user session info
+                await authCache.set(`session:${user._id}`, {
+                    userId: user._id,
+                    email: user.email,
+                    role: user.role,
+                    lastActivity: new Date()
+                });
+
+                // Remove password from response
+                const userResponse = user.toObject();
+                const { password: _, ...userWithoutPassword } = userResponse;
+
+                // Record successful login
+                logger.info(`User logged in: ${email}`);
+                performanceMonitor.recordCacheHit();
+
+                return {
+                    user: userWithoutPassword,
+                    token,
+                    refreshToken
+                };
+            } catch (error) {
+                logger.error("Login error:", error);
+                performanceMonitor.recordCacheMiss();
+                throw error;
             }
-
-            // Check if user is active
-            if (!user.isActive) {
-                throw new AppError("Account is deactivated", 401);
-            }
-
-            // Update last login
-            user.lastLogin = new Date();
-            await user.save({ validateBeforeSave: false });
-
-            // Generate tokens
-            const token = user.getSignedJwtToken();
-            const refreshToken = user.getRefreshToken();
-
-            // Remove password from response
-            const userResponse = user.toObject();
-            const { password: _, ...userWithoutPassword } = userResponse;
-
-            return {
-                user: userWithoutPassword,
-                token,
-                refreshToken
-            };
-        } catch (error) {
-            logger.error("Login error:", error);
-            throw error;
-        }
+        });
     }
 
     /**
@@ -265,39 +322,53 @@ export class AuthService {
     }
 
     /**
-     * Refresh JWT token with rotation
+     * Refresh JWT token with rotation and optimized performance
      */
     static async refreshToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
-        try {
-            // Verify refresh token
-            const decoded = jwt.verify(refreshToken, config.jwt.refreshSecret) as any;
+        return QueryAnalyzer.analyzeQuery("AuthService.refreshToken", async () => {
+            try {
+                // Check if token is blacklisted first (faster than JWT verification)
+                const isBlacklisted = await tokenBlacklistCache.get(refreshToken);
+                if (isBlacklisted) {
+                    throw new AppError("Token has been revoked", 401);
+                }
 
-            // Get user
-            const user = await User.findById(decoded.id);
-            if (!user || !user.isActive) {
+                // Verify refresh token
+                const decoded = jwt.verify(refreshToken, config.jwt.refreshSecret) as any;
+
+                // Get user using cached method
+                const user = await (User as any).findByIdCached(decoded.id);
+                if (!user || !user.isActive) {
+                    throw new AppError("Invalid refresh token", 401);
+                }
+
+                // Blacklist the old refresh token to prevent reuse
+                await tokenBlacklistCache.set(refreshToken, true);
+
+                // Generate new tokens (both access and refresh)
+                const newToken = user.getSignedJwtToken();
+                const newRefreshToken = user.getRefreshToken();
+
+                // Update session cache
+                await authCache.set(`session:${user._id}`, {
+                    userId: user._id,
+                    email: user.email,
+                    role: user.role,
+                    lastActivity: new Date()
+                });
+
+                logger.info(`Token refreshed for user: ${user.email}`);
+                performanceMonitor.recordCacheHit();
+
+                return {
+                    token: newToken,
+                    refreshToken: newRefreshToken
+                };
+            } catch (error) {
+                logger.error("Refresh token error:", error);
+                performanceMonitor.recordCacheMiss();
                 throw new AppError("Invalid refresh token", 401);
             }
-
-            // Blacklist the old refresh token to prevent reuse
-            const tokenBlacklist = new (await import("../utils/performance")).CacheWrapper(
-                "blacklist",
-                7 * 24 * 60 * 60
-            ); // 7 days
-            await tokenBlacklist.set(refreshToken, true);
-
-            // Generate new tokens (both access and refresh)
-            const newToken = user.getSignedJwtToken();
-            const newRefreshToken = user.getRefreshToken();
-
-            logger.info(`Token refreshed for user: ${user.email}`);
-
-            return {
-                token: newToken,
-                refreshToken: newRefreshToken
-            };
-        } catch (error) {
-            logger.error("Refresh token error:", error);
-            throw new AppError("Invalid refresh token", 401);
-        }
+        });
     }
 }

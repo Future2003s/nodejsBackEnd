@@ -1,11 +1,13 @@
 # 🔐 Authentication & User Management API Documentation
 
 ## Base URL
+
 ```
 http://localhost:8081/api/v1
 ```
 
 ## 🚀 Quick Test
+
 ```bash
 curl -X GET http://localhost:8081/health
 curl -X GET http://localhost:8081/api/v1/test
@@ -14,13 +16,15 @@ curl -X GET http://localhost:8081/api/v1/test
 ## 📋 Authentication Endpoints
 
 ### 1. Register User
+
 **POST** `/auth/register`
 
 **Request Body:**
+
 ```json
 {
     "firstName": "John",
-    "lastName": "Doe", 
+    "lastName": "Doe",
     "email": "john@example.com",
     "password": "Password123",
     "phone": "+1234567890" // optional
@@ -28,6 +32,7 @@ curl -X GET http://localhost:8081/api/v1/test
 ```
 
 **Response:**
+
 ```json
 {
     "success": true,
@@ -49,9 +54,11 @@ curl -X GET http://localhost:8081/api/v1/test
 ```
 
 ### 2. Login User
+
 **POST** `/auth/login`
 
 **Request Body:**
+
 ```json
 {
     "email": "john@example.com",
@@ -60,6 +67,7 @@ curl -X GET http://localhost:8081/api/v1/test
 ```
 
 **Response:**
+
 ```json
 {
     "success": true,
@@ -80,14 +88,17 @@ curl -X GET http://localhost:8081/api/v1/test
 ```
 
 ### 3. Get Current User
+
 **GET** `/auth/me`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
     "success": true,
@@ -113,14 +124,17 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### 4. Change Password
+
 **PUT** `/auth/change-password`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Request Body:**
+
 ```json
 {
     "currentPassword": "OldPassword123",
@@ -129,6 +143,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
     "success": true,
@@ -137,9 +152,11 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### 5. Forgot Password
+
 **POST** `/auth/forgot-password`
 
 **Request Body:**
+
 ```json
 {
     "email": "john@example.com"
@@ -147,6 +164,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
     "success": true,
@@ -155,9 +173,11 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### 6. Reset Password
+
 **PUT** `/auth/reset-password/:token`
 
 **Request Body:**
+
 ```json
 {
     "password": "NewPassword123"
@@ -165,12 +185,15 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
     "success": true,
     "message": "Password reset successful",
     "data": {
-        "user": { /* user object */ },
+        "user": {
+            /* user object */
+        },
         "token": "new_jwt_token",
         "refreshToken": "new_refresh_token"
     }
@@ -178,9 +201,11 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### 7. Verify Email
+
 **GET** `/auth/verify-email/:token`
 
 **Response:**
+
 ```json
 {
     "success": true,
@@ -189,9 +214,11 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### 8. Refresh Token
+
 **POST** `/auth/refresh-token`
 
 **Request Body:**
+
 ```json
 {
     "refreshToken": "refresh_token"
@@ -199,6 +226,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
     "success": true,
@@ -213,22 +241,27 @@ Authorization: Bearer <jwt_token>
 ## 👤 User Management Endpoints
 
 ### 1. Get User Profile
+
 **GET** `/users/profile`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ### 2. Update User Profile
+
 **PUT** `/users/profile`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Request Body:**
+
 ```json
 {
     "firstName": "John Updated",
@@ -238,22 +271,27 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### 3. Get User Addresses
+
 **GET** `/users/addresses`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ### 4. Add Address
+
 **POST** `/users/addresses`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Request Body:**
+
 ```json
 {
     "type": "home",
@@ -267,25 +305,31 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### 5. Update Address
+
 **PUT** `/users/addresses/:addressId`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ### 6. Delete Address
+
 **DELETE** `/users/addresses/:addressId`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ### 7. Set Default Address
+
 **PUT** `/users/addresses/:addressId/default`
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
@@ -293,6 +337,7 @@ Authorization: Bearer <jwt_token>
 ## 🔒 Authentication
 
 All protected endpoints require a JWT token in the Authorization header:
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
@@ -300,12 +345,14 @@ Authorization: Bearer <your_jwt_token>
 ## 📝 Validation Rules
 
 ### Password Requirements:
+
 - Minimum 6 characters
 - At least one uppercase letter
-- At least one lowercase letter  
+- At least one lowercase letter
 - At least one number
 
 ### Email:
+
 - Valid email format
 - Unique (for registration)
 
@@ -319,6 +366,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 Common HTTP Status Codes:
+
 - `200` - Success
 - `201` - Created
 - `400` - Bad Request (validation errors)
@@ -330,18 +378,20 @@ Common HTTP Status Codes:
 ## 🧪 Testing with cURL
 
 ### Register a new user:
+
 ```bash
 curl -X POST http://localhost:8081/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "John",
     "lastName": "Doe",
-    "email": "john@example.com", 
+    "email": "john@example.com",
     "password": "Password123"
   }'
 ```
 
 ### Login:
+
 ```bash
 curl -X POST http://localhost:8081/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -352,6 +402,7 @@ curl -X POST http://localhost:8081/api/v1/auth/login \
 ```
 
 ### Get user profile (replace TOKEN with actual JWT):
+
 ```bash
 curl -X GET http://localhost:8081/api/v1/auth/me \
   -H "Authorization: Bearer TOKEN"
@@ -362,31 +413,34 @@ curl -X GET http://localhost:8081/api/v1/auth/me \
 To use these APIs with a real database:
 
 1. **Install MongoDB:**
-   ```bash
-   # Windows (with Chocolatey)
-   choco install mongodb
-   
-   # macOS (with Homebrew)
-   brew install mongodb-community
-   
-   # Ubuntu
-   sudo apt install mongodb
-   ```
+
+    ```bash
+    # Windows (with Chocolatey)
+    choco install mongodb
+
+    # macOS (with Homebrew)
+    brew install mongodb-community
+
+    # Ubuntu
+    sudo apt install mongodb
+    ```
 
 2. **Start MongoDB:**
-   ```bash
-   mongod
-   ```
+
+    ```bash
+    mongod
+    ```
 
 3. **Update .env file:**
-   ```env
-   DATABASE_URI=mongodb://localhost:27017/ecommerce
-   ```
+
+    ```env
+    DATABASE_URI=mongodb://localhost:27017/ecommerce
+    ```
 
 4. **Restart the server:**
-   ```bash
-   npm run dev
-   ```
+    ```bash
+    npm run dev
+    ```
 
 ## 🚀 Next Steps
 

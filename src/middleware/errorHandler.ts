@@ -48,6 +48,13 @@ export const errorHandler = (error: any, req: Request, res: Response, next: Next
         err = new AppError(message, 401);
     }
 
+    // bcrypt errors (password comparison issues)
+    if (error.message && error.message.includes("Illegal arguments")) {
+        const message = "Authentication failed - invalid credentials";
+        err = new AppError(message, 401);
+        logger.error("bcrypt error detected - likely missing password field in user object");
+    }
+
     // Check if request is for API endpoint
     if (req.originalUrl.startsWith("/api/")) {
         // Send JSON error response for API endpoints
